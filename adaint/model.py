@@ -481,3 +481,13 @@ class AiLUT(BaseModel):
             eval_result[metric] = self.allowed_metrics[metric](
                 output, gt, crop_border)
         return eval_result
+
+
+if __name__ == '__main__':
+    # AdaInt 其实是有两个小网络
+    # 第一个网络用于输出采样的范围
+    # 第二个网络和之前的一样用于输出每个子lut之间的权重
+
+
+
+    pass

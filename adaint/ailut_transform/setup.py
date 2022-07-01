@@ -1,7 +1,8 @@
 import os
+import torch
 import os.path as osp
 from setuptools import setup, find_packages
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 
 
 def get_version(version_file):
@@ -12,6 +13,21 @@ def get_version(version_file):
 
 os.chdir(osp.dirname(osp.abspath(__file__)))
 csrc_directory = osp.join('ailut', 'csrc')
+
+extension_src = None
+if torch.cuda.is_available():
+    extension_src = CUDAExtension('ailut._ext', [
+        osp.join(csrc_directory, 'ailut_transform.cpp'),
+        osp.join(csrc_directory, 'ailut_transform_cpu.cpp'),
+        osp.join(csrc_directory, 'ailut_transform_cuda.cu')
+    ])
+else:
+    # 因为旧的在mac上无法编译，这里改了下源码
+    # 方便在 mac 端调试
+    extension_src = CppExtension('ailut._ext', [
+        osp.join(csrc_directory, 'ailut_transform_pure_cpu.cpp')
+    ])
+
 setup(
     name='ailut',
     version=get_version(osp.join('ailut', 'version.py')),
@@ -21,11 +37,7 @@ setup(
     packages=find_packages(),
     include_package_data=False,
     ext_modules=[
-        CUDAExtension('ailut._ext', [
-            osp.join(csrc_directory, 'ailut_transform.cpp'),
-            osp.join(csrc_directory, 'ailut_transform_cpu.cpp'),
-            osp.join(csrc_directory, 'ailut_transform_cuda.cu')
-        ])
+        extension_src
     ],
     cmdclass={
         'build_ext': BuildExtension

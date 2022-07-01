@@ -1,4 +1,8 @@
 import os
+import sys
+
+sys.path.append("/Users/zihua.zeng/Workspace/AdaInt")
+
 import argparse
 
 import mmcv
@@ -37,7 +41,8 @@ def enhancement_inference(model, img):
     # prepare data
     data = dict(lq_path=img)
     data = test_pipeline(data)
-    data = scatter(collate([data], samples_per_gpu=1), [device])[0]
+    # data = scatter(collate([data], samples_per_gpu=1), [device])[0]
+
     # forward the model
     with torch.no_grad():
         result = model(test_mode=True, **data)
@@ -63,13 +68,17 @@ def main():
         raise ValueError('It seems that you did not input a valid '
                          '"image_path".')
 
-    model = init_model(
-        args.config, args.checkpoint, device=torch.device('cuda', args.device))
+    if torch.cuda.is_available():
+        model = init_model(
+            args.config, args.checkpoint, device=torch.device('cuda', args.device))
+    else:
+        model = init_model(args.config, args.checkpoint, device="cpu")
 
     output = enhancement_inference(model, args.img_path)
     output = tensor2img(output)
 
     mmcv.imwrite(output, args.save_path)
+
 
 if __name__ == '__main__':
     main()
