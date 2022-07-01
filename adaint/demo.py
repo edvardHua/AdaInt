@@ -41,8 +41,10 @@ def enhancement_inference(model, img):
     # prepare data
     data = dict(lq_path=img)
     data = test_pipeline(data)
-    # data = scatter(collate([data], samples_per_gpu=1), [device])[0]
-
+    if torch.cuda.is_available():
+        data = scatter(collate([data], samples_per_gpu=1), [device])[0]
+    else:
+        data['lq'] = data['lq'].unsqueeze(0)
     # forward the model
     with torch.no_grad():
         result = model(test_mode=True, **data)
